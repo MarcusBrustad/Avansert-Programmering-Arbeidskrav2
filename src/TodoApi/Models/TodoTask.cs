@@ -13,7 +13,7 @@ public class TodoTask : BaseEntity
     public string? Description { get; set; } 
     
     public DateTime? DueDate { get; set; }
-    public bool IsCompleted { get; set; } = false;
+    public bool IsCompleted { get; set; } 
     
     [ForeignKey(nameof(User))]
     public Guid UserId { get; set; }
