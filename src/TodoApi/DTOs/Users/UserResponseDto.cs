@@ -8,5 +8,4 @@ public class UserResponseDto
     
     public DateTime CreatedAt { get; set; }
     
-    
 }

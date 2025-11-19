@@ -11,9 +11,10 @@ using TodoApi.Services.Users;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.RegisterMappers();
+builder.Services.AddMappers();
 builder.Services.AddScoped<IUserService, UserService>();
 
+builder.Services.AddRepositories();
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUser, CurrentUser>();
@@ -22,6 +23,7 @@ builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+builder.Services.AddControllers();
 
 builder.Services.AddDbContext<TodoApiDbContext>(options =>
 {

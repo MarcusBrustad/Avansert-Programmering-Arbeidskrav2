@@ -32,4 +32,15 @@ public class UserService(IUserRepository userRepository,
         return existingUser == null ? null : userResponseMapper.MapToDto(existingUser);
         
     }
+
+    public async Task<User?> AuthenticateUserAsync(string username, string password)
+    {
+        var user = await userRepository.GetByUsernameAsync(username);
+
+        if (user == null) return null;
+
+        var isValid = BCrypt.Net.BCrypt.Verify(password, user.HashedPassword);
+        
+        return isValid ? user : null;
+    }
 }
