@@ -23,6 +23,7 @@ public class UserService(IUserRepository userRepository,
         user.CreatedAt = DateTime.UtcNow;
         
         User? addedUser = await userRepository.AddAsync(user);
+        Console.WriteLine("Added user: " + addedUser);
         return addedUser == null ? null : userResponseMapper.MapToDto(addedUser);
     }
 

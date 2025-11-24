@@ -21,7 +21,6 @@ public static class RepositoryExtensions
             services.AddScoped(interfaceType, repositoryType);
         }
         
-                
         return services;
     }
 }

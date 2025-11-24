@@ -21,8 +21,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Controllers\" />
-    <Folder Include="Middleware\" />
+    <Folder Include="Controllers\Tasks\" />
+    <Folder Include="logs\" />
   </ItemGroup>
 
 </Project>
