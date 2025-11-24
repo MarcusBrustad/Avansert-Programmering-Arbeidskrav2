@@ -10,6 +10,7 @@ using TodoApi.Mappers;
 using TodoApi.Middleware;
 using TodoApi.Models;
 using TodoApi.Repositories.Users;
+using TodoApi.Services.Tasks;
 using TodoApi.Services.Users;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,6 +24,7 @@ builder.Services.AddProblemDetails();
 
 builder.Services.AddMappers();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<ITaskService, TaskService>();
 
 builder.Services.AddRepositories();
 
