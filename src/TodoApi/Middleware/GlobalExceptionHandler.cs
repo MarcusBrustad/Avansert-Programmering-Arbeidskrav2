@@ -1,4 +1,8 @@
-﻿using Microsoft.AspNetCore.Diagnostics;
+﻿using System.Diagnostics;
+using System.Net;
+using Microsoft.AspNetCore.Diagnostics;
+using TodoApi.Exceptions;
+using ValidationException = TodoApi.Exceptions.ValidationException;
 
 namespace TodoApi.Middleware;
 
@@ -9,46 +13,53 @@ public class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger) : IE
         Exception exception, 
         CancellationToken cancellationToken)
     {
-        // 🆕 Hent timing hvis det finnes
+        
         var stopwatch = httpContext.Items["RequestStopwatch"] as System.Diagnostics.Stopwatch;
         var elapsed = stopwatch?.ElapsedMilliseconds ?? 0;
+        
+        var traceId = Activity.Current?.Id ?? httpContext.TraceIdentifier;
+        
         
         logger.LogError(
             exception,
             "Unhandled exception occurred. TraceId: {TraceId}", 
-            httpContext.TraceIdentifier);
+            traceId);
         
         var (statusCode, title) = MapException(exception);
 
-        // 🆕 Logg request completion med riktig status
-        logger.LogError(
-            "HTTP {Method} {Path} failed with {StatusCode} in {ElapsedMs}ms",
-            httpContext.Request.Method,
-            httpContext.Request.Path,
-            statusCode,
-            elapsed);
-
-        await Results.Problem(
-            title: title,
-            statusCode: statusCode,
-            extensions: new Dictionary<string, object?>
-            {
-                { "traceId", httpContext.TraceIdentifier }
-            }
-        ).ExecuteAsync(httpContext);
+        var problem = new ProblemDetailsWithTrace
+        {
+            Title = title,
+            Detail = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development"
+                ? exception.ToString()
+                : null,
+            Status = (int)statusCode,
+            Instance = httpContext.Request.Path,
+            TraceId = traceId,
+            Errors = exception is ValidationException ve
+                ? ve.Errors
+                : null
+        };
+    
+        httpContext.Response.StatusCode = (int)statusCode;
+        await httpContext.Response.WriteAsJsonAsync(problem, cancellationToken);
         
         return true;
     }
 
-    private static (int statusCode, string title) MapException(Exception exception)
+    private static (HttpStatusCode statusCode, string title) MapException(Exception ex)
     {
-        return exception switch
+        return ex switch
         {
-            ArgumentNullException => (StatusCodes.Status400BadRequest, "Invalid argument"),
-            ArgumentException => (StatusCodes.Status400BadRequest, "Invalid argument"),
-            KeyNotFoundException => (StatusCodes.Status404NotFound, "Resource not found"),
-            UnauthorizedAccessException => (StatusCodes.Status403Forbidden, "Access denied"),
-            _ => (StatusCodes.Status500InternalServerError, "An error occurred while processing your request")
+            BadRequestException => (HttpStatusCode.BadRequest, "Bad request"),
+            UnauthorizedException => (HttpStatusCode.Unauthorized, "Unauthorized"),
+            ForbiddenException => (HttpStatusCode.Forbidden, "Forbidden"),
+            NotFoundException => (HttpStatusCode.NotFound, "Resource not found"),
+            ConflictException => (HttpStatusCode.Conflict, "Conflict"),
+            GoneException => (HttpStatusCode.Gone, "Resource gone"),
+            ValidationException => (HttpStatusCode.BadRequest, "Validation error"),
+            
+            _ => (HttpStatusCode.InternalServerError, "An error occurred while processing your request")
         };
     }
 }
