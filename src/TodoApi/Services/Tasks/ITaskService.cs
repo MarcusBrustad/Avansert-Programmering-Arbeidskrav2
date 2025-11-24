@@ -4,11 +4,11 @@ namespace TodoApi.Services.Tasks;
 
 public interface ITaskService
 {
-    Task<IEnumerable<TaskResponseDto>> GetAllByUserIdAsync(Guid userId);
+    Task<IEnumerable<TaskResponseDto>> GetAllAsync();
 
-    Task<TaskResponseDto> CreateAsync(CreateTaskDto dto, Guid userId);
+    Task<TaskResponseDto> CreateAsync(CreateTaskDto dto);
     
-    Task<TaskResponseDto?> UpdateAsync(Guid taskId, UpdateTaskDto dto, Guid userId);
+    Task<TaskResponseDto> UpdateAsync(Guid taskId, UpdateTaskDto dto);
     
-    Task<TaskResponseDto?> DeleteAsync(Guid taskId, Guid userId);
+    Task<TaskResponseDto> DeleteAsync(Guid taskId);
 }
