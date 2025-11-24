@@ -1,4 +1,5 @@
 ﻿using TodoApi.DTOs.Users;
+using TodoApi.Exceptions;
 using TodoApi.Mappers;
 using TodoApi.Mappers.Users;
 using TodoApi.Models;
@@ -10,28 +11,29 @@ public class UserService(IUserRepository userRepository,
     IMapper<UserResponseDto, User> userResponseMapper,
     IMapper<RegisterUserDto, User> registerUserMapper) : IUserService
 {
-    public async Task<UserResponseDto?> RegisterAsync(RegisterUserDto dto)
+    public async Task<UserResponseDto> RegisterAsync(RegisterUserDto dto)
     {
         var existingUser = await userRepository.GetByUsernameAsync(dto.Username);
-        if (existingUser != null) return null;
+        if (existingUser != null)
+            throw new ConflictException("Username already exists");
         
         string hashedPassword = BCrypt.Net.BCrypt.HashPassword(dto.Password);
-
+        
         User user = registerUserMapper.MapToModel(dto);
         user.Id = Guid.NewGuid();
         user.HashedPassword = hashedPassword;
         user.CreatedAt = DateTime.UtcNow;
         
-        User? addedUser = await userRepository.AddAsync(user);
-        Console.WriteLine("Added user: " + addedUser);
-        return addedUser == null ? null : userResponseMapper.MapToDto(addedUser);
+        User addedUser = await userRepository.AddAsync(user);
+        return userResponseMapper.MapToDto(addedUser);
+        
     }
 
-    public async Task<UserResponseDto?> GetByIdAsync(Guid id)
+    public async Task<UserResponseDto> GetByIdAsync(Guid id)
     {
-        User? existingUser = await userRepository.GetByIdAsync(id);
-        return existingUser == null ? null : userResponseMapper.MapToDto(existingUser);
+        User existingUser = await userRepository.GetByIdAsync(id);
         
+        return userResponseMapper.MapToDto(existingUser);
     }
 
     public async Task<User?> AuthenticateUserAsync(string username, string password)
